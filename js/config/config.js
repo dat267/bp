@@ -45,6 +45,16 @@ class Config {
     if (process.env.PORT) this.port = process.env.PORT;
     if (process.env.API_KEY) this.apiKey = process.env.API_KEY;
   }
+
+  save(configPath = null) {
+    const finalPath = configPath || path.join(process.cwd(), 'config.json');
+    const data = {
+      appEnv: this.appEnv,
+      port: this.port,
+      apiKey: this.apiKey
+    };
+    fs.writeFileSync(finalPath, JSON.stringify(data, null, 2));
+  }
 }
 
 module.exports = Config;

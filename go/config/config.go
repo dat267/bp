@@ -50,6 +50,17 @@ func LoadConfig(configPath string) *Config {
 	return cfg
 }
 
+func (cfg *Config) Save(configPath string) error {
+	if configPath == "" {
+		configPath = "config.json"
+	}
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(configPath, data, 0644)
+}
+
 func getEnv(key string) string {
 	return os.Getenv(key)
 }

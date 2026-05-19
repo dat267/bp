@@ -34,6 +34,7 @@ func main() {
 	commands := []Command{
 		NewHelloCommand(cfg),
 		NewInfoCommand(cfg),
+		NewConfigCommand(cfg),
 	}
 
 	usage := func() {

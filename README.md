@@ -25,6 +25,9 @@ A collection of reusable code snippets and architectural patterns for various pr
 - **JavaScript:** See [js/utils/retry.js](./js/utils/retry.js) - Async/await retry utility.
 - **PowerShell:** See [pwsh/utils/Retry.psm1](./pwsh/utils/Retry.psm1) - Script block wrapper.
 
+### How to interactively setup configuration?
+- **All Languages:** Run the `config` subcommand (e.g., `go run ./cmd/cli config`, `node cli/cli.js config`, or `pwsh ./cli/cli.ps1 config`). It will prompt for required variables and save them to `config.json`.
+
 ## Getting Started
 
 Refer to the README in each subdirectory for specific usage and testing instructions.

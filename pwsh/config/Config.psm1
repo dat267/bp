@@ -42,4 +42,24 @@ function Get-Config {
     return $config
 }
 
-Export-ModuleMember -Function Get-Config
+function Save-Config {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        $Config,
+
+        [string]$ConfigPath
+    )
+
+    $finalPath = if ($ConfigPath) { $ConfigPath } else { Join-Path $PSScriptRoot "config.json" }
+    
+    $data = @{
+        app_env = $Config.AppEnv
+        port    = $Config.Port
+        api_key = $Config.APIKey
+    }
+
+    $data | ConvertTo-Json | Out-File $finalPath
+}
+
+Export-ModuleMember -Function Get-Config, Save-Config
