@@ -103,8 +103,8 @@ func TestConfig_GetMetadata(t *testing.T) {
 	cfg := &Config{}
 	meta := cfg.GetMetadata()
 
-	if len(meta) != 3 {
-		t.Errorf("Expected 3 fields, got %d", len(meta))
+	if len(meta) != 4 {
+		t.Errorf("Expected 4 fields, got %d", len(meta))
 	}
 
 	found := false

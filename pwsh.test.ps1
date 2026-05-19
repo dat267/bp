@@ -46,6 +46,15 @@ Remove-Item $corruptPath
 $out = & ./pwsh/cli/cli.ps1 hello --name=Tester | Out-String
 if ($out -match "Hello, Tester!") { $Results += "PASS: CLI Hello Flag" } else { $Results += "FAIL: CLI Hello Flag (Output: $out)" }
 
+# Test 9: Flag Position Independence
+$outBefore = & ./pwsh/cli/cli.ps1 --verbose info | Out-String
+$outAfter = & ./pwsh/cli/cli.ps1 info --verbose | Out-String
+if ($outBefore -match "Verbose:     True" -and $outAfter -match "Verbose:     True") {
+    $Results += "PASS: Flag Position Independence"
+} else {
+    $Results += "FAIL: Flag Position Independence"
+}
+
 # Test 5: Retry Utility
 Import-Module "./pwsh/utils/Retry.psm1" -Force
 $attempts = 0

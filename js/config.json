@@ -1,5 +1,6 @@
 {
   "appEnv": "development",
   "port": "3000",
-  "apiKey": ""
+  "apiKey": "",
+  "verbose": false
 }
