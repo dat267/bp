@@ -87,4 +87,4 @@ function Save-Config {
     $data | ConvertTo-Json | Out-File $finalPath
 }
 
-Export-ModuleMember -Function Get-Config, Save-Config
+Export-ModuleMember -Function Get-Config, Save-Config, Test-Port, Test-NotEmpty

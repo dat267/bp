@@ -17,8 +17,23 @@ Remove-Item Env:BP_PORT
 $configPath = "./pwsh/config/config.json"
 '{"port": "5555"}' | Out-File $configPath
 $cfg = Get-Config
-if ($cfg.Port -eq "5555") { $Results += "PASS: File Fallback" } else { $Results += "FAIL: File Fallback" }
+if ($cfg.Port -eq "5555") { $Results += "PASS: File Fallback" } else { $Results += "FAIL: File Fallback ($($cfg.Port))" }
 Remove-Item $configPath
+
+# Test 6: Save-Config
+$savePath = "./pwsh/config/test_save.json"
+$testCfg = @{ AppEnv = "prod"; Port = "4444"; APIKey = "key" }
+Save-Config -Config $testCfg -ConfigPath $savePath
+$saved = Get-Content $savePath -Raw | ConvertFrom-Json
+if ($saved.port -eq "4444") { $Results += "PASS: Save-Config" } else { $Results += "FAIL: Save-Config" }
+Remove-Item $savePath
+
+# Test 7: Validators
+# Note: Validators are inside the module scope, but we can test them via the module members if exported
+$vPort1 = Test-Port "8080"
+$vPort2 = Test-Port "abc"
+$vEmpty = Test-NotEmpty ""
+if (-not $vPort1 -and $vPort2 -and $vEmpty) { $Results += "PASS: Validators" } else { $Results += "FAIL: Validators" }
 
 # Test 4: CLI Hello
 $out = & ./pwsh/cli/cli.ps1 hello --name=Tester | Out-String
