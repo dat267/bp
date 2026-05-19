@@ -45,4 +45,54 @@ describe('APIClient', () => {
     
     server.close();
   });
+
+  test('should handle timeouts', async () => {
+    const server = http.createServer((req, res) => {
+      setTimeout(() => {
+        res.writeHead(200);
+        res.end();
+      }, 100);
+    });
+    await new Promise(resolve => server.listen(0, resolve));
+    const port = server.address().port;
+    
+    // Short timeout of 20ms
+    const client = new APIClient(`http://localhost:${port}`, 20);
+    const res = await client.do({ method: 'GET', path: '/timeout' });
+    
+    assert.ok(res.error, 'Expected a timeout error');
+    assert.strictEqual(res.statusCode, 0);
+    
+    server.close();
+  });
+
+  test('should send headers and body correctly', async () => {
+    let receivedHeaders = {};
+    let receivedBody = '';
+
+    const server = http.createServer((req, res) => {
+      receivedHeaders = req.headers;
+      req.on('data', chunk => { receivedBody += chunk; });
+      req.on('end', () => {
+        res.writeHead(200);
+        res.end();
+      });
+    });
+    await new Promise(resolve => server.listen(0, resolve));
+    const port = server.address().port;
+    const client = new APIClient(`http://localhost:${port}`);
+
+    await client.do({
+      method: 'POST',
+      path: '/post',
+      headers: { 'x-test': 'value' },
+      body: { foo: 'bar' }
+    });
+
+    assert.strictEqual(receivedHeaders['x-test'], 'value');
+    assert.strictEqual(receivedHeaders['content-type'], 'application/json');
+    assert.strictEqual(receivedBody, JSON.stringify({ foo: 'bar' }));
+
+    server.close();
+  });
 });

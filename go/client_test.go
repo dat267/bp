@@ -43,7 +43,7 @@ func TestAPIClient_DoConcurrent(t *testing.T) {
 	results := client.DoConcurrent(context.Background(), requests)
 
 	if len(results) != 3 {
-		t.Errorf("Expected 3 results, got %d", len(results))
+		t.Errorf("Expected 3 results, got %d", len(results) )
 	}
 
 	for _, res := range results {
@@ -51,4 +51,44 @@ func TestAPIClient_DoConcurrent(t *testing.T) {
 			t.Errorf("Expected status 200, got %d", res.StatusCode)
 		}
 	}
+}
+
+func TestAPIClient_Timeout(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(100 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	// Set a very short timeout
+	client := NewAPIClient(server.URL, 20*time.Millisecond)
+	res := client.Do(context.Background(), RequestParams{
+		Method: http.MethodGet,
+		Path:   "/timeout",
+	})
+
+	if res.Error == nil {
+		t.Error("Expected timeout error, got nil")
+	}
+}
+
+func TestAPIClient_HeadersAndBody(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Test") != "value" {
+			t.Errorf("Expected header X-Test: value, got %s", r.Header.Get("X-Test"))
+		}
+		if r.Header.Get("Content-Type") != "application/json" {
+			t.Errorf("Expected Content-Type: application/json, got %s", r.Header.Get("Content-Type"))
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := NewAPIClient(server.URL, 5*time.Second)
+	client.Do(context.Background(), RequestParams{
+		Method:  http.MethodPost,
+		Path:    "/post",
+		Headers: map[string]string{"X-Test": "value"},
+		Body:    map[string]string{"foo": "bar"},
+	})
 }
