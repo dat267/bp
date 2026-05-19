@@ -32,9 +32,9 @@ describe('Config', () => {
   });
 
   test('should load environment variables with precedence', () => {
-    process.env.PORT = '9999';
+    process.env.BP_PORT = '9999';
     const config = new Config();
     assert.strictEqual(config.port, '9999');
-    delete process.env.PORT;
+    delete process.env.BP_PORT;
   });
 });

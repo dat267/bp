@@ -6,8 +6,8 @@ import (
 )
 
 func TestLoadConfig_EnvPrecedence(t *testing.T) {
-	os.Setenv("PORT", "9999")
-	defer os.Unsetenv("PORT")
+	os.Setenv("BP_PORT", "9999")
+	defer os.Unsetenv("BP_PORT")
 
 	cfg := LoadConfig("")
 	if cfg.Port != "9999" {

@@ -16,16 +16,7 @@ class Config {
     const finalPath = configPath || path.join(process.cwd(), 'config.json');
     
     if (!fs.existsSync(finalPath) && isDefault) {
-      const example = {
-        appEnv: this.appEnv,
-        port: this.port,
-        apiKey: this.apiKey
-      };
-      try {
-        fs.writeFileSync(finalPath, JSON.stringify(example, null, 2));
-      } catch (err) {
-        console.warn('Warning: Could not auto-generate config.json', err.message);
-      }
+      this.save(finalPath);
     }
 
     if (fs.existsSync(finalPath)) {
@@ -41,9 +32,13 @@ class Config {
   }
 
   loadFromEnv() {
-    if (process.env.APP_ENV) this.appEnv = process.env.APP_ENV;
-    if (process.env.PORT) this.port = process.env.PORT;
-    if (process.env.API_KEY) this.apiKey = process.env.API_KEY;
+    // rclone style: auto-mapping BP_PORT, BP_APP_ENV, etc.
+    const prefix = 'BP_';
+    const getEnv = (key) => process.env[`${prefix}${key.toUpperCase().replace(/-/g, '_')}`];
+
+    this.appEnv = getEnv('app-env') || this.appEnv;
+    this.port = getEnv('port') || this.port;
+    this.apiKey = getEnv('api-key') || this.apiKey;
   }
 
   save(configPath = null) {

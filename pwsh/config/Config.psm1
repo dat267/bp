@@ -15,12 +15,7 @@ function Get-Config {
     $finalPath = if ($ConfigPath) { $ConfigPath } else { Join-Path $PSScriptRoot "config.json" }
     
     if (-not (Test-Path $finalPath) -and $isDefault) {
-        $example = @{
-            app_env = $config.AppEnv
-            port    = $config.Port
-            api_key = $config.APIKey
-        }
-        $example | ConvertTo-Json | Out-File $finalPath
+        Save-Config -Config $config -ConfigPath $finalPath
     }
 
     if (Test-Path $finalPath) {
@@ -35,9 +30,22 @@ function Get-Config {
     }
 
     # 2. Load from environment variables (overrides file/defaults)
-    if ($env:APP_ENV) { $config.AppEnv = $env:APP_ENV }
-    if ($env:PORT) { $config.Port = $env:PORT }
-    if ($env:API_KEY) { $config.APIKey = $env:API_KEY }
+    # rclone style: auto-mapping BP_PORT, BP_APP_ENV, etc.
+    $prefix = "BP_"
+    function Get-EnvAuto {
+        param($Name)
+        $key = $prefix + $Name.ToUpper().Replace("-", "_")
+        return Get-Item -Path "Env:$key" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Value
+    }
+
+    $envAppEnv = Get-EnvAuto "app-env"
+    if ($envAppEnv) { $config.AppEnv = $envAppEnv }
+
+    $envPort = Get-EnvAuto "port"
+    if ($envPort) { $config.Port = $envPort }
+
+    $envApiKey = Get-EnvAuto "api-key"
+    if ($envApiKey) { $config.APIKey = $envApiKey }
 
     return $config
 }

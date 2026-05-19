@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"bp/config"
@@ -32,32 +33,84 @@ func (c *ConfigCommand) Run(args []string) error {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Println("--- Interactive Configuration Setup ---")
-	
-	c.config.AppEnv = c.prompt(reader, "App Environment", c.config.AppEnv)
-	c.config.Port = c.prompt(reader, "Port", c.config.Port)
-	c.config.APIKey = c.prompt(reader, "API Key (required)", c.config.APIKey)
+	for {
+		fmt.Println("\n--- rclone-style Configuration Menu ---")
+		fmt.Println("1) View current configuration")
+		fmt.Println("2) Edit App Environment")
+		fmt.Println("3) Edit Port")
+		fmt.Println("4) Edit API Key")
+		fmt.Println("s) Save and Exit")
+		fmt.Println("q) Quit without saving")
+		fmt.Print("Choose option: ")
 
-	fmt.Print("\nSave changes to config.json? (y/n): ")
-	confirm, _ := reader.ReadString('\n')
-	if strings.ToLower(strings.TrimSpace(confirm)) == "y" {
-		if err := c.config.Save(""); err != nil {
-			return fmt.Errorf("failed to save config: %w", err)
+		input, _ := reader.ReadString('\n')
+		choice := strings.TrimSpace(input)
+
+		switch choice {
+		case "1":
+			c.viewConfig()
+		case "2":
+			c.config.AppEnv = c.prompt(reader, "App Environment", c.config.AppEnv, nil)
+		case "3":
+			c.config.Port = c.prompt(reader, "Port", c.config.Port, validatePort)
+		case "4":
+			c.config.APIKey = c.prompt(reader, "API Key", c.config.APIKey, validateNotEmpty)
+		case "s":
+			if err := c.config.Save(""); err != nil {
+				return fmt.Errorf("failed to save config: %w", err)
+			}
+			fmt.Println("Configuration saved.")
+			return nil
+		case "q":
+			fmt.Println("Exiting without saving.")
+			return nil
+		default:
+			fmt.Println("Invalid option.")
 		}
-		fmt.Println("Configuration saved successfully.")
-	} else {
-		fmt.Println("Changes discarded.")
 	}
+}
 
+func (c *ConfigCommand) viewConfig() {
+	fmt.Printf("\nCurrent Configuration:\n")
+	fmt.Printf("  AppEnv:  %s\n", c.config.AppEnv)
+	fmt.Printf("  Port:    %s\n", c.config.Port)
+	fmt.Printf("  APIKey:  %s\n", c.config.APIKey)
+}
+
+func (c *ConfigCommand) prompt(reader *bufio.Reader, label, current string, validator func(string) error) string {
+	for {
+		fmt.Printf("%s [%s]: ", label, current)
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+
+		if input == "" {
+			return current
+		}
+
+		if validator != nil {
+			if err := validator(input); err != nil {
+				fmt.Printf("Error: %v\n", err)
+				continue
+			}
+		}
+		return input
+	}
+}
+
+func validatePort(val string) error {
+	port, err := strconv.Atoi(val)
+	if err != nil {
+		return fmt.Errorf("port must be a number")
+	}
+	if port < 1 || port > 65535 {
+		return fmt.Errorf("port must be between 1 and 65535")
+	}
 	return nil
 }
 
-func (c *ConfigCommand) prompt(reader *bufio.Reader, label, current string) string {
-	fmt.Printf("%s [%s]: ", label, current)
-	input, _ := reader.ReadString('\n')
-	input = strings.TrimSpace(input)
-	if input == "" {
-		return current
+func validateNotEmpty(val string) error {
+	if strings.TrimSpace(val) == "" {
+		return fmt.Errorf("value cannot be empty")
 	}
-	return input
+	return nil
 }

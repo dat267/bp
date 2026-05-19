@@ -8,10 +8,10 @@ $cfg = Get-Config
 if ($cfg.AppEnv -eq "development") { $Results += "PASS: Config Defaults" } else { $Results += "FAIL: Config Defaults" }
 
 # Test 2: Env Precedence
-$env:PORT = "1234"
+$env:BP_PORT = "1234"
 $cfg = Get-Config
-if ($cfg.Port -eq "1234") { $Results += "PASS: Env Precedence" } else { $Results += "FAIL: Env Precedence" }
-Remove-Item Env:PORT
+if ($cfg.Port -eq "1234") { $Results += "PASS: Env Precedence" } else { $Results += "FAIL: Env Precedence ($($cfg.Port))" }
+Remove-Item Env:BP_PORT
 
 # Test 3: File Fallback
 $configPath = "./pwsh/config/config.json"

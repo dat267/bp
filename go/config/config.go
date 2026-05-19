@@ -3,13 +3,16 @@ package config
 import (
 	"encoding/json"
 	"os"
+	"strings"
 )
 
 type Config struct {
-	AppEnv string `json:"app_env"`
-	Port   string `json:"port"`
-	APIKey string `json:"api_key"`
+	AppEnv string `json:"app_env" flag:"app-env"`
+	Port   string `json:"port" flag:"port"`
+	APIKey string `json:"api_key" flag:"api-key"`
 }
+
+const EnvPrefix = "BP_"
 
 func LoadConfig(configPath string) *Config {
 	cfg := &Config{
@@ -19,17 +22,8 @@ func LoadConfig(configPath string) *Config {
 	}
 
 	// 1. Load from file (lowest priority)
-	defaultPath := false
 	if configPath == "" {
 		configPath = "config.json"
-		defaultPath = true
-	}
-
-	if _, err := os.Stat(configPath); os.IsNotExist(err) && defaultPath {
-		// Generate example config if it's the default path and doesn't exist
-		if data, err := json.MarshalIndent(cfg, "", "  "); err == nil {
-			os.WriteFile(configPath, data, 0644)
-		}
 	}
 
 	if data, err := os.ReadFile(configPath); err == nil {
@@ -37,13 +31,14 @@ func LoadConfig(configPath string) *Config {
 	}
 
 	// 2. Load from environment variables (overrides file/defaults)
-	if val := getEnv("APP_ENV"); val != "" {
+	// rclone style: auto-mapping based on prefix + flag name
+	if val := getEnvAuto("app-env"); val != "" {
 		cfg.AppEnv = val
 	}
-	if val := getEnv("PORT"); val != "" {
+	if val := getEnvAuto("port"); val != "" {
 		cfg.Port = val
 	}
-	if val := getEnv("API_KEY"); val != "" {
+	if val := getEnvAuto("api-key"); val != "" {
 		cfg.APIKey = val
 	}
 
@@ -61,6 +56,8 @@ func (cfg *Config) Save(configPath string) error {
 	return os.WriteFile(configPath, data, 0644)
 }
 
-func getEnv(key string) string {
+func getEnvAuto(flagName string) string {
+	// convert app-env to BP_APP_ENV
+	key := EnvPrefix + strings.ToUpper(strings.ReplaceAll(flagName, "-", "_"))
 	return os.Getenv(key)
 }
