@@ -42,11 +42,14 @@ function Invoke-Config {
         Show-Menu
         $choice = Read-Host "Choose option"
 
+        $keys = $schema.Keys | ForEach-Object { $_ }
+
         if ($choice -eq "v") {
             Write-Host "`nCurrent Configuration:"
-            foreach ($field in $schema) {
+            foreach ($key in $keys) {
+                $field = $schema[$key]
                 $label = ($field.Label + ":").PadRight(16)
-                Write-Host "  $label $($Config[$field.Key])"
+                Write-Host "  $label $($Config[$key])"
             }
             continue
         }
@@ -60,9 +63,10 @@ function Invoke-Config {
             return
         }
 
-        if ($choice -as [int] -and $choice -gt 0 -and $choice -le $schema.Count) {
-            $field = $schema[[int]$choice - 1]
-            $Config[$field.Key] = Get-ValidatedInput $field.Label $Config[$field.Key] $field.Validator
+        if ($choice -as [int] -and $choice -gt 0 -and $choice -le $keys.Count) {
+            $key = $keys[[int]$choice - 1]
+            $field = $schema[$key]
+            $Config[$key] = Get-ValidatedInput $field.Label $Config[$key] $field.Validator
         } else {
             Write-Host "Invalid option."
         }

@@ -35,8 +35,8 @@ class ConfigCommand {
     const showMenu = () => {
       console.log('\n--- rclone-style Configuration Menu ---');
       console.log('v) View current configuration');
-      Config.schema.forEach((field, i) => {
-        console.log(`${i + 1}) Edit ${field.label}`);
+      Object.keys(Config.schema).forEach((key, i) => {
+        console.log(`${i + 1}) Edit ${Config.schema[key].label}`);
       });
       console.log('s) Save and Exit');
       console.log('q) Quit without saving');
@@ -46,10 +46,12 @@ class ConfigCommand {
       showMenu();
       const choice = await new Promise(resolve => rl.question('Choose option: ', resolve));
       
+      const schemaKeys = Object.keys(Config.schema);
+
       if (choice === 'v') {
         console.log('\nCurrent Configuration:');
-        Config.schema.forEach(field => {
-          console.log(`  ${(field.label + ':').padEnd(16)} ${this.config[field.key]}`);
+        schemaKeys.forEach(key => {
+          console.log(`  ${(Config.schema[key].label + ':').padEnd(16)} ${this.config[key]}`);
         });
         continue;
       }
@@ -66,9 +68,10 @@ class ConfigCommand {
       }
 
       const idx = parseInt(choice, 10);
-      if (!isNaN(idx) && idx > 0 && idx <= Config.schema.length) {
-        const field = Config.schema[idx - 1];
-        this.config[field.key] = await prompt(field.label, this.config[field.key], field.validator);
+      if (!isNaN(idx) && idx > 0 && idx <= schemaKeys.length) {
+        const key = schemaKeys[idx - 1];
+        const field = Config.schema[key];
+        this.config[key] = await prompt(field.label, this.config[key], field.validator);
       } else {
         console.log('Invalid option.');
       }

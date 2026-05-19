@@ -4,10 +4,9 @@ function Get-Config {
         [string]$ConfigPath
     )
 
-    $config = @{
-        AppEnv = "development"
-        Port   = "8080"
-        APIKey = ""
+    $config = @{}
+    foreach ($key in $script:ConfigSchema.Keys) {
+        $config[$key] = $script:ConfigSchema[$key].Default
     }
 
     # 1. Load from file (lowest priority)
@@ -21,16 +20,17 @@ function Get-Config {
     if (Test-Path $finalPath) {
         try {
             $fileConfig = Get-Content $finalPath -Raw | ConvertFrom-Json
-            if ($fileConfig.app_env) { $config.AppEnv = $fileConfig.app_env }
-            if ($fileConfig.port) { $config.Port = $fileConfig.port }
-            if ($fileConfig.api_key) { $config.APIKey = $fileConfig.api_key }
+            foreach ($key in $script:ConfigSchema.Keys) {
+                # JSON names are app_env, while PowerShell keys are AppEnv
+                $jsonKey = $script:ConfigSchema[$key].JsonKey
+                if ($fileConfig.$jsonKey) { $config[$key] = $fileConfig.$jsonKey }
+            }
         } catch {
             Write-Warning "Failed to parse config.json: $_"
         }
     }
 
     # 2. Load from environment variables (overrides file/defaults)
-    # rclone style: auto-mapping BP_PORT, BP_APP_ENV, etc.
     $prefix = "BP_"
     function Get-EnvAuto {
         param($Name)
@@ -38,23 +38,20 @@ function Get-Config {
         return Get-Item -Path "Env:$key" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Value
     }
 
-    $envAppEnv = Get-EnvAuto "app-env"
-    if ($envAppEnv) { $config.AppEnv = $envAppEnv }
-
-    $envPort = Get-EnvAuto "port"
-    if ($envPort) { $config.Port = $envPort }
-
-    $envApiKey = Get-EnvAuto "api-key"
-    if ($envApiKey) { $config.APIKey = $envApiKey }
+    foreach ($key in $script:ConfigSchema.Keys) {
+        $flagName = $script:ConfigSchema[$key].FlagName
+        $envVal = Get-EnvAuto $flagName
+        if ($envVal) { $config[$key] = $envVal }
+    }
 
     return $config
 }
 
-$ConfigSchema = @(
-    @{ Key = "AppEnv"; Label = "App Environment" }
-    @{ Key = "Port"; Label = "Port"; Validator = "Test-Port" }
-    @{ Key = "APIKey"; Label = "API Key"; Validator = "Test-NotEmpty" }
-)
+$ConfigSchema = [ordered]@{
+    AppEnv = @{ Label = "App Environment"; Default = "development"; JsonKey = "app_env"; FlagName = "app-env" }
+    Port   = @{ Label = "Port"; Default = "8080"; Validator = "Test-Port"; JsonKey = "port"; FlagName = "port" }
+    APIKey = @{ Label = "API Key"; Default = ""; Validator = "Test-NotEmpty"; JsonKey = "api_key"; FlagName = "api-key" }
+}
 
 function Test-Port {
     param($val)

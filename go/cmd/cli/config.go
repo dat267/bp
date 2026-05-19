@@ -68,8 +68,14 @@ func (c *ConfigCommand) Run(args []string) error {
 		idx, err := strconv.Atoi(choice)
 		if err == nil && idx > 0 && idx <= len(meta) {
 			field := meta[idx-1]
-			fVal := val.FieldByName(field.Key)
-			newValue := c.prompt(reader, field.Label, fVal.String(), field.Validator)
+			fVal := val.FieldByName(field.Name)
+			
+			var validator func(string) error
+			if field.Validator != "" {
+				validator = config.Validators[field.Validator]
+			}
+
+			newValue := c.prompt(reader, field.Label, fVal.String(), validator)
 			fVal.SetString(newValue)
 		} else {
 			fmt.Println("Invalid option.")
@@ -80,7 +86,7 @@ func (c *ConfigCommand) Run(args []string) error {
 func (c *ConfigCommand) viewConfig(meta []config.FieldMeta, val reflect.Value) {
 	fmt.Printf("\nCurrent Configuration:\n")
 	for _, field := range meta {
-		fmt.Printf("  %-15s %s\n", field.Label+":", val.FieldByName(field.Key).String())
+		fmt.Printf("  %-15s %s\n", field.Label+":", val.FieldByName(field.Name).String())
 	}
 }
 

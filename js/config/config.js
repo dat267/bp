@@ -2,11 +2,11 @@ const fs = require('fs');
 const path = require('path');
 
 class Config {
-  static schema = [
-    { key: 'appEnv', label: 'App Environment' },
-    { key: 'port', label: 'Port', validator: Config.validatePort },
-    { key: 'apiKey', label: 'API Key', validator: Config.validateNotEmpty }
-  ];
+  static schema = {
+    appEnv: { label: 'App Environment', default: 'development' },
+    port: { label: 'Port', default: '3000', validator: Config.validatePort },
+    apiKey: { label: 'API Key', default: '', validator: Config.validateNotEmpty }
+  };
 
   static validatePort(val) {
     const port = parseInt(val, 10);
@@ -20,9 +20,10 @@ class Config {
   }
 
   constructor(configPath = null) {
-    this.appEnv = 'development';
-    this.port = '3000';
-    this.apiKey = '';
+    // Initialize from schema defaults
+    Object.keys(Config.schema).forEach(key => {
+      this[key] = Config.schema[key].default;
+    });
 
     this.loadFromFile(configPath);
     this.loadFromEnv();
@@ -39,9 +40,9 @@ class Config {
     if (fs.existsSync(finalPath)) {
       try {
         const data = JSON.parse(fs.readFileSync(finalPath, 'utf8'));
-        if (data.appEnv) this.appEnv = data.appEnv;
-        if (data.port) this.port = data.port;
-        if (data.apiKey) this.apiKey = data.apiKey;
+        Object.keys(Config.schema).forEach(key => {
+          if (data[key]) this[key] = data[key];
+        });
       } catch (err) {
         console.warn('Warning: Failed to parse config.json', err.message);
       }
@@ -49,22 +50,23 @@ class Config {
   }
 
   loadFromEnv() {
-    // rclone style: auto-mapping BP_PORT, BP_APP_ENV, etc.
     const prefix = 'BP_';
     const getEnv = (key) => process.env[`${prefix}${key.toUpperCase().replace(/-/g, '_')}`];
 
-    this.appEnv = getEnv('app-env') || this.appEnv;
-    this.port = getEnv('port') || this.port;
-    this.apiKey = getEnv('api-key') || this.apiKey;
+    Object.keys(Config.schema).forEach(key => {
+      // Map camelCase to kebab-case for env check (e.g. appEnv -> app-env)
+      const flagName = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+      const envVal = getEnv(flagName);
+      if (envVal) this[key] = envVal;
+    });
   }
 
   save(configPath = null) {
     const finalPath = configPath || path.join(process.cwd(), 'config.json');
-    const data = {
-      appEnv: this.appEnv,
-      port: this.port,
-      apiKey: this.apiKey
-    };
+    const data = {};
+    Object.keys(Config.schema).forEach(key => {
+      data[key] = this[key];
+    });
     fs.writeFileSync(finalPath, JSON.stringify(data, null, 2));
   }
 }

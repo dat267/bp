@@ -4,27 +4,40 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 )
 
 type Config struct {
 	AppEnv string `json:"app_env" flag:"app-env" label:"App Environment"`
-	Port   string `json:"port" flag:"port" label:"Port"`
-	APIKey string `json:"api_key" flag:"api-key" label:"API Key"`
+	Port   string `json:"port" flag:"port" label:"Port" validate:"port"`
+	APIKey string `json:"api_key" flag:"api-key" label:"API Key" validate:"required"`
 }
 
 type FieldMeta struct {
-	Key       string
+	Name      string
 	Label     string
-	Validator func(string) error
+	Validator string
 }
 
+// GetMetadata now uses reflection to read tags, ensuring 0% repetition
 func (cfg *Config) GetMetadata() []FieldMeta {
-	return []FieldMeta{
-		{Key: "AppEnv", Label: "App Environment"},
-		{Key: "Port", Label: "Port", Validator: ValidatePort},
-		{Key: "APIKey", Label: "API Key", Validator: ValidateNotEmpty},
+	t := reflect.TypeOf(*cfg)
+	var meta []FieldMeta
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		meta = append(meta, FieldMeta{
+			Name:      field.Name,
+			Label:     field.Tag.Get("label"),
+			Validator: field.Tag.Get("validate"),
+		})
 	}
+	return meta
+}
+
+var Validators = map[string]func(string) error{
+	"port":     ValidatePort,
+	"required": ValidateNotEmpty,
 }
 
 // Helper validators moved to config package for schema reuse
