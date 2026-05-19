@@ -1,12 +1,21 @@
+const { parseArgs } = require('../args');
+
 class HelloCommand {
-  constructor() {
+  constructor(config) {
     this.name = 'hello';
     this.description = 'Greets a person';
+    this.config = config;
   }
 
   execute(args) {
-    const nameArg = args.find(arg => arg.startsWith('--name='));
-    const name = nameArg ? nameArg.split('=')[1] : 'World';
+    const options = parseArgs(args);
+    
+    let defaultName = 'World';
+    if (this.config.appEnv === 'production') {
+      defaultName = 'Production User';
+    }
+
+    const name = options.name || defaultName;
     console.log(`Hello, ${name}!`);
   }
 }

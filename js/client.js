@@ -1,3 +1,5 @@
+const { withRetry } = require('./utils/retry');
+
 class APIClient {
   constructor(baseURL, timeout = 10000) {
     this.baseURL = baseURL;
@@ -37,6 +39,17 @@ class APIClient {
         error: error.message
       };
     }
+  }
+
+  async doWithRetry(params, retryOptions = {}) {
+    return withRetry(async () => {
+      const res = await this.do(params);
+      if (res.error) throw new Error(res.error);
+      if (res.statusCode >= 500 || res.statusCode === 429) {
+        throw new Error(`Transient error: ${res.statusCode}`);
+      }
+      return res;
+    }, retryOptions);
   }
 
   async doConcurrent(requests) {

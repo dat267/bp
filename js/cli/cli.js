@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
+const config = require('../config/config');
+
 class CLI {
   constructor() {
     this.commands = new Map();
@@ -14,7 +16,7 @@ class CLI {
     for (const file of files) {
       if (file.endsWith('.js')) {
         const CommandClass = require(path.join(commandsPath, file));
-        const cmd = new CommandClass();
+        const cmd = new CommandClass(config);
         this.commands.set(cmd.name, cmd);
       }
     }
