@@ -63,6 +63,16 @@ describe('Config', () => {
     assert.ok(Config.validateNotEmpty('  '));
   });
 
+  test('should fallback to defaults if config.json is corrupt', () => {
+    const tempPath = path.join(process.cwd(), 'corrupt.json');
+    fs.writeFileSync(tempPath, '{ invalid json }');
+    
+    const config = new Config(tempPath);
+    assert.strictEqual(config.port, '3000'); // Default
+    
+    fs.unlinkSync(tempPath);
+  });
+
   test('should load environment variables with precedence', () => {
     process.env.BP_PORT = '9999';
     const config = new Config();

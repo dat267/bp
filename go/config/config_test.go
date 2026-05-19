@@ -30,6 +30,21 @@ func TestLoadConfig_FileFallback(t *testing.T) {
 	}
 }
 
+func TestLoadConfig_CorruptJSON(t *testing.T) {
+	configPath := "corrupt.json"
+	os.WriteFile(configPath, []byte("{ invalid json }"), 0644)
+	defer os.Remove(configPath)
+
+	// Should not panic, should fallback to defaults
+	cfg := LoadConfig(configPath)
+	if cfg == nil {
+		t.Fatal("Expected config to be initialized even with corrupt file")
+	}
+	if cfg.Port != "8080" {
+		t.Errorf("Expected default Port 8080, got %s", cfg.Port)
+	}
+}
+
 func TestLoadConfig_AutoGenerate(t *testing.T) {
 	// The auto-generation logic only triggers if path is "" (which sets config.json)
 	configPath := "config.json"

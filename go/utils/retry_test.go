@@ -29,21 +29,19 @@ func TestWithRetry_Success(t *testing.T) {
 	}
 }
 
-func TestWithRetry_Failure(t *testing.T) {
+func TestWithRetry_ContextCancel(t *testing.T) {
 	opts := DefaultRetryOptions()
-	opts.MaxAttempts = 2
-	opts.InitialDelay = 1 * time.Millisecond
+	opts.MaxAttempts = 5
+	opts.InitialDelay = 1 * time.Hour // Long delay
 
-	attempts := 0
-	err := WithRetry(context.Background(), opts, func() error {
-		attempts++
-		return errors.New("permanent fail")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+
+	err := WithRetry(ctx, opts, func() error {
+		return errors.New("fail")
 	})
 
-	if err == nil {
-		t.Error("Expected error, got nil")
-	}
-	if attempts != 2 {
-		t.Errorf("Expected 2 attempts, got %d", attempts)
+	if err != context.DeadlineExceeded {
+		t.Errorf("Expected DeadlineExceeded, got %v", err)
 	}
 }

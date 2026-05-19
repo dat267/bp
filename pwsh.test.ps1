@@ -35,6 +35,13 @@ $vPort2 = Test-Port "abc"
 $vEmpty = Test-NotEmpty ""
 if (-not $vPort1 -and $vPort2 -and $vEmpty) { $Results += "PASS: Validators" } else { $Results += "FAIL: Validators" }
 
+# Test 8: Config Corruption
+$corruptPath = "./pwsh/config/corrupt.json"
+'{ "bad": "json" ' | Out-File $corruptPath # Missing closing brace
+$cfg = Get-Config -ConfigPath $corruptPath
+if ($cfg.Port -eq "8080") { $Results += "PASS: Config Corruption" } else { $Results += "FAIL: Config Corruption ($($cfg.Port))" }
+Remove-Item $corruptPath
+
 # Test 4: CLI Hello
 $out = & ./pwsh/cli/cli.ps1 hello --name=Tester | Out-String
 if ($out -match "Hello, Tester!") { $Results += "PASS: CLI Hello Flag" } else { $Results += "FAIL: CLI Hello Flag (Output: $out)" }

@@ -95,4 +95,10 @@ describe('APIClient', () => {
 
     server.close();
   });
+
+  test('should handle empty requests list gracefully', async () => {
+    const client = new APIClient('http://localhost:0');
+    const results = await client.doConcurrent([]);
+    assert.strictEqual(results.length, 0);
+  });
 });
