@@ -10,10 +10,9 @@ function Get-Config {
     }
 
     # 1. Load from file (lowest priority)
-    $isDefault = -not $ConfigPath
     $finalPath = if ($ConfigPath) { $ConfigPath } else { Join-Path $PSScriptRoot "config.json" }
     
-    if (-not (Test-Path $finalPath) -and $isDefault) {
+    if (-not (Test-Path $finalPath)) {
         Save-Config -Config $config -ConfigPath $finalPath
     }
 

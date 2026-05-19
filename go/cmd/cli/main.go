@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"bp/config"
 )
@@ -16,7 +17,15 @@ type Command interface {
 }
 
 func main() {
-	// 1. Preliminary parse for global flags (like --config, --verbose)
+	// 1. Calculate default config path (portable: same folder as executable)
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	exDir := filepath.Dir(ex)
+	defaultConfigPath := filepath.Join(exDir, "config.json")
+
+	// 2. Preliminary parse for global flags (like --config, --verbose)
 	var configPath string
 	var verbose bool
 	var args []string
@@ -30,6 +39,10 @@ func main() {
 		} else {
 			args = append(args, arg)
 		}
+	}
+
+	if configPath == "" {
+		configPath = defaultConfigPath
 	}
 
 	cfg := config.LoadConfig(configPath)

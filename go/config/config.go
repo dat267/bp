@@ -70,15 +70,12 @@ func LoadConfig(configPath string) *Config {
 		APIKey: "",
 	}
 
-	// 1. Load from file (lowest priority)
-	defaultPath := false
 	if configPath == "" {
 		configPath = "config.json"
-		defaultPath = true
 	}
 
-	if _, err := os.Stat(configPath); os.IsNotExist(err) && defaultPath {
-		// Generate example config if it's the default path and doesn't exist
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		// Generate example config if it doesn't exist
 		if data, err := json.MarshalIndent(cfg, "", "  "); err == nil {
 			os.WriteFile(configPath, data, 0644)
 		}

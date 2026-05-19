@@ -31,10 +31,9 @@ class Config {
   }
 
   loadFromFile(configPath) {
-    const isDefault = !configPath;
     const finalPath = configPath || path.join(process.cwd(), 'config.json');
     
-    if (!fs.existsSync(finalPath) && isDefault) {
+    if (!fs.existsSync(finalPath)) {
       this.save(finalPath);
     }
 

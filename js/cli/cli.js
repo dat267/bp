@@ -5,9 +5,13 @@ const Config = require('../config/config');
 
 class CLI {
   constructor() {
-    // 1. Parse global flags
+    // 1. Calculate default config path (portable: same folder as this script)
+    const entryDir = __dirname;
+    const defaultConfigPath = path.join(entryDir, 'config.json');
+
+    // 2. Parse global flags
     const configArg = process.argv.find(arg => arg.startsWith('--config='));
-    const configPath = configArg ? configArg.split('=')[1] : null;
+    const configPath = configArg ? configArg.split('=')[1] : defaultConfigPath;
     
     this.config = new Config(configPath);
     this.commands = new Map();

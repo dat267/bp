@@ -18,6 +18,7 @@ function Show-Help {
 }
 
 # 1. Parse global flags and identify subcommand
+$defaultConfigPath = Join-Path $PSScriptRoot "config.json"
 $ConfigPath = $null
 $Verbose = $false
 $filteredArgs = @()
@@ -39,6 +40,8 @@ if (-not $subcommand) {
     Show-Help
     exit 1
 }
+
+if (-not $ConfigPath) { $ConfigPath = $defaultConfigPath }
 
 Import-Module (Join-Path $PSScriptRoot "../config/Config.psm1") -Force
 $Config = Get-Config -ConfigPath $ConfigPath
