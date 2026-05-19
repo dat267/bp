@@ -16,3 +16,7 @@
 
 # Go workspace file
 go.work
+
+# JavaScript
+node_modules/
+package-lock.json
