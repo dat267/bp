@@ -11,7 +11,7 @@ type Config struct {
 	APIKey string `json:"api_key"`
 }
 
-func LoadConfig() *Config {
+func LoadConfig(configPath string) *Config {
 	cfg := &Config{
 		AppEnv: "development",
 		Port:   "8080",
@@ -19,7 +19,11 @@ func LoadConfig() *Config {
 	}
 
 	// 1. Load from file (lowest priority)
-	if data, err := os.ReadFile("config.json"); err == nil {
+	if configPath == "" {
+		configPath = "config.json"
+	}
+
+	if data, err := os.ReadFile(configPath); err == nil {
 		json.Unmarshal(data, cfg)
 	}
 

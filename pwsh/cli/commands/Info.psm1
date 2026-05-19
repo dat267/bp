@@ -1,6 +1,9 @@
 function Invoke-Info {
     [CmdletBinding()]
     param(
+        [Parameter(ValueFromRemainingArguments = $true)]
+        $Args,
+
         [Parameter(Mandatory = $true)]
         $Config
     )

@@ -1,6 +1,8 @@
 function Get-Config {
     [CmdletBinding()]
-    param()
+    param(
+        [string]$ConfigPath
+    )
 
     $config = @{
         AppEnv = "development"
@@ -9,10 +11,10 @@ function Get-Config {
     }
 
     # 1. Load from file (lowest priority)
-    $configPath = Join-Path $PSScriptRoot "config.json"
-    if (Test-Path $configPath) {
+    $finalPath = if ($ConfigPath) { $ConfigPath } else { Join-Path $PSScriptRoot "config.json" }
+    if (Test-Path $finalPath) {
         try {
-            $fileConfig = Get-Content $configPath -Raw | ConvertFrom-Json
+            $fileConfig = Get-Content $finalPath -Raw | ConvertFrom-Json
             if ($fileConfig.app_env) { $config.AppEnv = $fileConfig.app_env }
             if ($fileConfig.port) { $config.Port = $fileConfig.port }
             if ($fileConfig.api_key) { $config.APIKey = $fileConfig.api_key }

@@ -2,20 +2,20 @@ const fs = require('fs');
 const path = require('path');
 
 class Config {
-  constructor() {
+  constructor(configPath = null) {
     this.appEnv = 'development';
     this.port = '3000';
     this.apiKey = '';
 
-    this.loadFromFile();
+    this.loadFromFile(configPath);
     this.loadFromEnv();
   }
 
-  loadFromFile() {
-    const configPath = path.join(process.cwd(), 'config.json');
-    if (fs.existsSync(configPath)) {
+  loadFromFile(configPath) {
+    const finalPath = configPath || path.join(process.cwd(), 'config.json');
+    if (fs.existsSync(finalPath)) {
       try {
-        const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        const data = JSON.parse(fs.readFileSync(finalPath, 'utf8'));
         if (data.appEnv) this.appEnv = data.appEnv;
         if (data.port) this.port = data.port;
         if (data.apiKey) this.apiKey = data.apiKey;
@@ -32,4 +32,4 @@ class Config {
   }
 }
 
-module.exports = new Config();
+module.exports = Config;

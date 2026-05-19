@@ -1,10 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 
-const config = require('../config/config');
+const Config = require('../config/config');
 
 class CLI {
   constructor() {
+    // 1. Parse global flags
+    const configArg = process.argv.find(arg => arg.startsWith('--config='));
+    const configPath = configArg ? configArg.split('=')[1] : null;
+    
+    this.config = new Config(configPath);
     this.commands = new Map();
     this.loadCommands();
   }
@@ -16,14 +21,16 @@ class CLI {
     for (const file of files) {
       if (file.endsWith('.js')) {
         const CommandClass = require(path.join(commandsPath, file));
-        const cmd = new CommandClass(config);
+        const cmd = new CommandClass(this.config);
         this.commands.set(cmd.name, cmd);
       }
     }
   }
 
   run(args) {
-    const [commandName, ...rest] = args;
+    // 1. Filter out global flags
+    const filteredArgs = args.filter(arg => !arg.startsWith('--config='));
+    const [commandName, ...rest] = filteredArgs;
 
     if (!commandName || !this.commands.has(commandName)) {
       this.showHelp();

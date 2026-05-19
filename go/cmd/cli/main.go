@@ -16,7 +16,20 @@ type Command interface {
 }
 
 func main() {
-	cfg := config.LoadConfig()
+	// 1. Preliminary parse for global flags (like --config)
+	var configPath string
+	var args []string
+	for i := 1; i < len(os.Args); i++ {
+		arg := os.Args[i]
+		if (arg == "--config" || arg == "-c") && i+1 < len(os.Args) {
+			configPath = os.Args[i+1]
+			i++ // Skip the value
+		} else {
+			args = append(args, arg)
+		}
+	}
+
+	cfg := config.LoadConfig(configPath)
 
 	commands := []Command{
 		NewHelloCommand(cfg),
@@ -24,7 +37,9 @@ func main() {
 	}
 
 	usage := func() {
-		fmt.Printf("Usage: %s <command> [arguments]\n", os.Args[0])
+		fmt.Printf("Usage: %s [global flags] <command> [arguments]\n", os.Args[0])
+		fmt.Println("\nGlobal flags:")
+		fmt.Println("  --config, -c <path>  Path to config file")
 		fmt.Println("\nAvailable commands:")
 		for _, cmd := range commands {
 			fmt.Printf("  %-10s %s\n", cmd.Name(), cmd.Description())
@@ -32,12 +47,12 @@ func main() {
 		fmt.Println("\nUse \"<command> --help\" for more information about a command.")
 	}
 
-	if len(os.Args) < 2 {
+	if len(args) < 1 {
 		usage()
 		os.Exit(1)
 	}
 
-	subcommand := os.Args[1]
+	subcommand := args[0]
 	if subcommand == "help" || subcommand == "-h" || subcommand == "--help" {
 		usage()
 		return
@@ -45,7 +60,7 @@ func main() {
 
 	for _, cmd := range commands {
 		if cmd.Name() == subcommand {
-			if err := cmd.Run(os.Args[2:]); err != nil {
+			if err := cmd.Run(args[1:]); err != nil {
 				if err != flag.ErrHelp {
 					fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 					os.Exit(1)
