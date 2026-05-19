@@ -2,6 +2,23 @@ const fs = require('fs');
 const path = require('path');
 
 class Config {
+  static schema = [
+    { key: 'appEnv', label: 'App Environment' },
+    { key: 'port', label: 'Port', validator: Config.validatePort },
+    { key: 'apiKey', label: 'API Key', validator: Config.validateNotEmpty }
+  ];
+
+  static validatePort(val) {
+    const port = parseInt(val, 10);
+    if (isNaN(port) || port < 1 || port > 65535) return 'Port must be between 1 and 65535';
+    return null;
+  }
+
+  static validateNotEmpty(val) {
+    if (!val || val.trim() === '') return 'Value cannot be empty';
+    return null;
+  }
+
   constructor(configPath = null) {
     this.appEnv = 'development';
     this.port = '3000';

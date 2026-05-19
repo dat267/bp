@@ -1,5 +1,7 @@
 const readline = require('readline');
 
+const Config = require('../../config/config');
+
 class ConfigCommand {
   constructor(config) {
     this.name = 'config';
@@ -30,57 +32,45 @@ class ConfigCommand {
       ask();
     });
 
-    const menu = () => new Promise((resolve) => {
+    const showMenu = () => {
       console.log('\n--- rclone-style Configuration Menu ---');
-      console.log('1) View current configuration');
-      console.log('2) Edit App Environment');
-      console.log('3) Edit Port');
-      console.log('4) Edit API Key');
+      console.log('v) View current configuration');
+      Config.schema.forEach((field, i) => {
+        console.log(`${i + 1}) Edit ${field.label}`);
+      });
       console.log('s) Save and Exit');
       console.log('q) Quit without saving');
-      rl.question('Choose option: ', resolve);
-    });
-
-    const validatePort = (val) => {
-      const port = parseInt(val, 10);
-      if (isNaN(port) || port < 1 || port > 65535) return 'Port must be between 1 and 65535';
-      return null;
-    };
-
-    const validateNotEmpty = (val) => {
-      if (!val || val.trim() === '') return 'Value cannot be empty';
-      return null;
     };
 
     while (true) {
-      const choice = await menu();
-      switch (choice) {
-        case '1':
-          console.log('\nCurrent Configuration:');
-          console.log(`  AppEnv:  ${this.config.appEnv}`);
-          console.log(`  Port:    ${this.config.port}`);
-          console.log(`  APIKey:  ${this.config.apiKey}`);
-          break;
-        case '2':
-          this.config.appEnv = await prompt('App Environment', this.config.appEnv);
-          break;
-        case '3':
-          this.config.port = await prompt('Port', this.config.port, validatePort);
-          break;
-        case '4':
-          this.config.apiKey = await prompt('API Key', this.config.apiKey, validateNotEmpty);
-          break;
-        case 's':
-          this.config.save();
-          console.log('Configuration saved.');
-          rl.close();
-          return;
-        case 'q':
-          console.log('Exiting without saving.');
-          rl.close();
-          return;
-        default:
-          console.log('Invalid option.');
+      showMenu();
+      const choice = await new Promise(resolve => rl.question('Choose option: ', resolve));
+      
+      if (choice === 'v') {
+        console.log('\nCurrent Configuration:');
+        Config.schema.forEach(field => {
+          console.log(`  ${(field.label + ':').padEnd(16)} ${this.config[field.key]}`);
+        });
+        continue;
+      }
+      if (choice === 's') {
+        this.config.save();
+        console.log('Configuration saved.');
+        rl.close();
+        return;
+      }
+      if (choice === 'q') {
+        console.log('Exiting without saving.');
+        rl.close();
+        return;
+      }
+
+      const idx = parseInt(choice, 10);
+      if (!isNaN(idx) && idx > 0 && idx <= Config.schema.length) {
+        const field = Config.schema[idx - 1];
+        this.config[field.key] = await prompt(field.label, this.config[field.key], field.validator);
+      } else {
+        console.log('Invalid option.');
       }
     }
   }

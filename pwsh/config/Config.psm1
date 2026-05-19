@@ -50,6 +50,26 @@ function Get-Config {
     return $config
 }
 
+$ConfigSchema = @(
+    @{ Key = "AppEnv"; Label = "App Environment" }
+    @{ Key = "Port"; Label = "Port"; Validator = "Test-Port" }
+    @{ Key = "APIKey"; Label = "API Key"; Validator = "Test-NotEmpty" }
+)
+
+function Test-Port {
+    param($val)
+    if ($val -notmatch "^\d+$") { return "Port must be a number" }
+    $p = [int]$val
+    if ($p -lt 1 -or $p -gt 65535) { return "Port must be between 1 and 65535" }
+    return $null
+}
+
+function Test-NotEmpty {
+    param($val)
+    if (-not $val -or $val.Trim() -eq "") { return "Value cannot be empty" }
+    return $null
+}
+
 function Save-Config {
     [CmdletBinding()]
     param(

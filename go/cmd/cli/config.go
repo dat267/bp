@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"bp/config"
+	"reflect"
 )
 
 type ConfigCommand struct {
@@ -32,13 +33,15 @@ func (c *ConfigCommand) Run(args []string) error {
 	}
 
 	reader := bufio.NewReader(os.Stdin)
+	meta := c.config.GetMetadata()
+	val := reflect.ValueOf(c.config).Elem()
 
 	for {
 		fmt.Println("\n--- rclone-style Configuration Menu ---")
-		fmt.Println("1) View current configuration")
-		fmt.Println("2) Edit App Environment")
-		fmt.Println("3) Edit Port")
-		fmt.Println("4) Edit API Key")
+		fmt.Println("v) View current configuration")
+		for i, field := range meta {
+			fmt.Printf("%d) Edit %s\n", i+1, field.Label)
+		}
 		fmt.Println("s) Save and Exit")
 		fmt.Println("q) Quit without saving")
 		fmt.Print("Choose option: ")
@@ -46,35 +49,39 @@ func (c *ConfigCommand) Run(args []string) error {
 		input, _ := reader.ReadString('\n')
 		choice := strings.TrimSpace(input)
 
-		switch choice {
-		case "1":
-			c.viewConfig()
-		case "2":
-			c.config.AppEnv = c.prompt(reader, "App Environment", c.config.AppEnv, nil)
-		case "3":
-			c.config.Port = c.prompt(reader, "Port", c.config.Port, validatePort)
-		case "4":
-			c.config.APIKey = c.prompt(reader, "API Key", c.config.APIKey, validateNotEmpty)
-		case "s":
+		if choice == "v" {
+			c.viewConfig(meta, val)
+			continue
+		}
+		if choice == "s" {
 			if err := c.config.Save(""); err != nil {
 				return fmt.Errorf("failed to save config: %w", err)
 			}
 			fmt.Println("Configuration saved.")
 			return nil
-		case "q":
+		}
+		if choice == "q" {
 			fmt.Println("Exiting without saving.")
 			return nil
-		default:
+		}
+
+		idx, err := strconv.Atoi(choice)
+		if err == nil && idx > 0 && idx <= len(meta) {
+			field := meta[idx-1]
+			fVal := val.FieldByName(field.Key)
+			newValue := c.prompt(reader, field.Label, fVal.String(), field.Validator)
+			fVal.SetString(newValue)
+		} else {
 			fmt.Println("Invalid option.")
 		}
 	}
 }
 
-func (c *ConfigCommand) viewConfig() {
+func (c *ConfigCommand) viewConfig(meta []config.FieldMeta, val reflect.Value) {
 	fmt.Printf("\nCurrent Configuration:\n")
-	fmt.Printf("  AppEnv:  %s\n", c.config.AppEnv)
-	fmt.Printf("  Port:    %s\n", c.config.Port)
-	fmt.Printf("  APIKey:  %s\n", c.config.APIKey)
+	for _, field := range meta {
+		fmt.Printf("  %-15s %s\n", field.Label+":", val.FieldByName(field.Key).String())
+	}
 }
 
 func (c *ConfigCommand) prompt(reader *bufio.Reader, label, current string, validator func(string) error) string {
