@@ -12,7 +12,22 @@ class Config {
   }
 
   loadFromFile(configPath) {
+    const isDefault = !configPath;
     const finalPath = configPath || path.join(process.cwd(), 'config.json');
+    
+    if (!fs.existsSync(finalPath) && isDefault) {
+      const example = {
+        appEnv: this.appEnv,
+        port: this.port,
+        apiKey: this.apiKey
+      };
+      try {
+        fs.writeFileSync(finalPath, JSON.stringify(example, null, 2));
+      } catch (err) {
+        console.warn('Warning: Could not auto-generate config.json', err.message);
+      }
+    }
+
     if (fs.existsSync(finalPath)) {
       try {
         const data = JSON.parse(fs.readFileSync(finalPath, 'utf8'));

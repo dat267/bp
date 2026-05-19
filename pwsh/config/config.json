@@ -1,0 +1,5 @@
+{
+  "app_env": "development",
+  "api_key": "",
+  "port": "8080"
+}

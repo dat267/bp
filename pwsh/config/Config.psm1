@@ -11,7 +11,18 @@ function Get-Config {
     }
 
     # 1. Load from file (lowest priority)
+    $isDefault = -not $ConfigPath
     $finalPath = if ($ConfigPath) { $ConfigPath } else { Join-Path $PSScriptRoot "config.json" }
+    
+    if (-not (Test-Path $finalPath) -and $isDefault) {
+        $example = @{
+            app_env = $config.AppEnv
+            port    = $config.Port
+            api_key = $config.APIKey
+        }
+        $example | ConvertTo-Json | Out-File $finalPath
+    }
+
     if (Test-Path $finalPath) {
         try {
             $fileConfig = Get-Content $finalPath -Raw | ConvertFrom-Json
