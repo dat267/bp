@@ -5,7 +5,8 @@ class Config {
   static schema = {
     appEnv: { label: 'App Environment', default: 'development' },
     port: { label: 'Port', default: '3000', validator: Config.validatePort },
-    apiKey: { label: 'API Key', default: '', validator: Config.validateNotEmpty }
+    apiKey: { label: 'API Key', default: '', validator: Config.validateNotEmpty },
+    verbose: { label: 'Verbose Mode', default: false }
   };
 
   static validatePort(val) {
@@ -57,7 +58,9 @@ class Config {
       // Map camelCase to kebab-case for env check (e.g. appEnv -> app-env)
       const flagName = key.replace(/([A-Z])/g, "-$1").toLowerCase();
       const envVal = getEnv(flagName);
-      if (envVal) this[key] = envVal;
+      if (envVal) {
+        this[key] = (typeof Config.schema[key].default === 'boolean') ? (envVal === 'true') : envVal;
+      }
     });
   }
 

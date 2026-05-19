@@ -16,20 +16,26 @@ type Command interface {
 }
 
 func main() {
-	// 1. Preliminary parse for global flags (like --config)
+	// 1. Preliminary parse for global flags (like --config, --verbose)
 	var configPath string
+	var verbose bool
 	var args []string
 	for i := 1; i < len(os.Args); i++ {
 		arg := os.Args[i]
 		if (arg == "--config" || arg == "-c") && i+1 < len(os.Args) {
 			configPath = os.Args[i+1]
 			i++ // Skip the value
+		} else if arg == "--verbose" || arg == "-v" {
+			verbose = true
 		} else {
 			args = append(args, arg)
 		}
 	}
 
 	cfg := config.LoadConfig(configPath)
+	if verbose {
+		cfg.Verbose = true
+	}
 
 	commands := []Command{
 		NewHelloCommand(cfg),

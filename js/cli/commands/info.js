@@ -8,6 +8,7 @@ class InfoCommand {
   execute() {
     console.log(`Environment: ${this.config.appEnv}`);
     console.log(`Port:        ${this.config.port}`);
+    console.log(`Verbose:     ${this.config.verbose}`);
     console.log(`API Key:     ${this.config.apiKey ? '********' : 'not set'}`);
   }
 }

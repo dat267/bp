@@ -13,6 +13,7 @@ function Invoke-Info {
     return @"
 Environment: $($Config.AppEnv)
 Port:        $($Config.Port)
+Verbose:     $($Config.Verbose)
 API Key:     $apiKeyStatus
 "@
 }

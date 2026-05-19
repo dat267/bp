@@ -41,16 +41,23 @@ function Get-Config {
     foreach ($key in $script:ConfigSchema.Keys) {
         $flagName = $script:ConfigSchema[$key].FlagName
         $envVal = Get-EnvAuto $flagName
-        if ($envVal) { $config[$key] = $envVal }
+        if ($envVal) { 
+            if ($script:ConfigSchema[$key].Default -is [bool]) {
+                $config[$key] = ($envVal -eq "true")
+            } else {
+                $config[$key] = $envVal
+            }
+        }
     }
 
     return $config
 }
 
 $ConfigSchema = [ordered]@{
-    AppEnv = @{ Label = "App Environment"; Default = "development"; JsonKey = "app_env"; FlagName = "app-env" }
-    Port   = @{ Label = "Port"; Default = "8080"; Validator = "Test-Port"; JsonKey = "port"; FlagName = "port" }
-    APIKey = @{ Label = "API Key"; Default = ""; Validator = "Test-NotEmpty"; JsonKey = "api_key"; FlagName = "api-key" }
+    AppEnv  = @{ Label = "App Environment"; Default = "development"; JsonKey = "app_env"; FlagName = "app-env" }
+    Port    = @{ Label = "Port"; Default = "8080"; Validator = "Test-Port"; JsonKey = "port"; FlagName = "port" }
+    APIKey  = @{ Label = "API Key"; Default = ""; Validator = "Test-NotEmpty"; JsonKey = "api_key"; FlagName = "api-key" }
+    Verbose = @{ Label = "Verbose Mode"; Default = $false; JsonKey = "verbose"; FlagName = "verbose" }
 }
 
 function Test-Port {

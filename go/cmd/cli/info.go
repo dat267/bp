@@ -29,5 +29,6 @@ func (c *InfoCommand) Run(args []string) error {
 	}
 	fmt.Printf("Environment: %s\n", c.config.AppEnv)
 	fmt.Printf("Port:        %s\n", c.config.Port)
+	fmt.Printf("Verbose:     %v\n", c.config.Verbose)
 	return nil
 }

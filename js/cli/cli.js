@@ -29,7 +29,12 @@ class CLI {
 
   run(args) {
     // 1. Filter out global flags
-    const filteredArgs = args.filter(arg => !arg.startsWith('--config='));
+    const verbose = args.some(arg => arg === '--verbose' || arg === '-v');
+    if (verbose) {
+      this.config.verbose = true;
+    }
+
+    const filteredArgs = args.filter(arg => !arg.startsWith('--config=') && arg !== '--verbose' && arg !== '-v');
     const [commandName, ...rest] = filteredArgs;
 
     if (!commandName || !this.commands.has(commandName)) {

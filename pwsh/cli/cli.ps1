@@ -17,34 +17,38 @@ function Show-Help {
     }
 }
 
-if ($args.Count -lt 1) {
-    Show-Help
-    exit 1
-}
-
-$subcommand = $args[0].ToLower()
-
-# 1. Parse global flags
+# 1. Parse global flags and identify subcommand
 $ConfigPath = $null
+$Verbose = $false
 $filteredArgs = @()
+$subcommand = $null
+
 foreach ($arg in $args) {
     if ($arg -like "--config=*") {
         $ConfigPath = $arg.Split("=")[1]
+    } elseif ($arg -eq "--verbose" -or $arg -eq "-v") {
+        $Verbose = $true
+    } elseif (-not $subcommand -and $arg -notlike "-*") {
+        $subcommand = $arg.ToLower()
     } else {
         $filteredArgs += $arg
     }
 }
 
-$remainingArgs = $filteredArgs[1..($filteredArgs.Count - 1)]
+if (-not $subcommand) {
+    Show-Help
+    exit 1
+}
 
 Import-Module (Join-Path $PSScriptRoot "../config/Config.psm1") -Force
 $Config = Get-Config -ConfigPath $ConfigPath
+if ($Verbose) { $Config.Verbose = $true }
 
 if ($commands.ContainsKey($subcommand)) {
     Import-Module $commands[$subcommand] -Force
     # Construct the function name (e.g., info -> Invoke-Info)
     $functionName = "Invoke-$($subcommand.Substring(0,1).ToUpper())$($subcommand.Substring(1))"
-    & $functionName -Args $remainingArgs -Config $Config
+    & $functionName -Args $filteredArgs -Config $Config
 }
 else {
     Write-Error "Unknown command: $subcommand"

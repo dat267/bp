@@ -9,9 +9,10 @@ import (
 )
 
 type Config struct {
-	AppEnv string `json:"app_env" flag:"app-env" label:"App Environment"`
-	Port   string `json:"port" flag:"port" label:"Port" validate:"port"`
-	APIKey string `json:"api_key" flag:"api-key" label:"API Key" validate:"required"`
+	AppEnv  string `json:"app_env" flag:"app-env" label:"App Environment"`
+	Port    string `json:"port" flag:"port" label:"Port" validate:"port"`
+	APIKey  string `json:"api_key" flag:"api-key" label:"API Key" validate:"required"`
+	Verbose bool   `json:"verbose" flag:"verbose" label:"Verbose Mode"`
 }
 
 type FieldMeta struct {
@@ -97,6 +98,9 @@ func LoadConfig(configPath string) *Config {
 	}
 	if val := getEnvAuto("api-key"); val != "" {
 		cfg.APIKey = val
+	}
+	if val := getEnvAuto("verbose"); val != "" {
+		cfg.Verbose = (val == "true")
 	}
 
 	return cfg
