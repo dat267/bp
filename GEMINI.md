@@ -19,6 +19,7 @@ This repository serves as a centralized collection of reusable code snippets and
 1. **Concurrent API Client:** 
     - Go: Goroutines + `sync.WaitGroup`.
     - JS: `async/await` + `Promise.all`.
+    - PowerShell: `ForEach-Object -Parallel` (available in PWSH 7+).
 2. **Structured Logging:**
     - Go: `log/slog` (JSON handler).
     - JS: Class-based JSON logger.

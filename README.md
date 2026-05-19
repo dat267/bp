@@ -13,6 +13,7 @@ A collection of reusable code snippets and architectural patterns for various pr
 ### How to call multiple APIs concurrently?
 - **Go:** See [go/README.md](./go/README.md) - Uses **goroutines** and `sync.WaitGroup`.
 - **JavaScript:** See [js/README.md](./js/README.md) - Uses **`Promise.all`** and `async/await`.
+- **PowerShell:** See [pwsh/client.psm1](./pwsh/client.psm1) - Uses **`ForEach-Object -Parallel`**.
 
 ### How to build an extensible CLI tool?
 - **Go:** See [go/cmd/cli/main.go](./go/cmd/cli/main.go) - Command interface pattern.
