@@ -31,3 +31,16 @@ A collection of reusable code snippets and architectural patterns for various pr
 ## Getting Started
 
 Refer to the README in each subdirectory for specific usage and testing instructions.
+
+### Running all tests
+You can run the entire test suite (Go, JS, and PowerShell) using the provided unified scripts:
+
+**Linux/macOS:**
+```bash
+./test.sh
+```
+
+**Windows/PowerShell:**
+```powershell
+./test.ps1
+```
