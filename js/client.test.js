@@ -101,4 +101,33 @@ describe('APIClient', () => {
     const results = await client.doConcurrent([]);
     assert.strictEqual(results.length, 0);
   });
+
+  test('should respect throttleLimit concurrency constraint', async () => {
+    let active = 0;
+    let maxActive = 0;
+    const server = http.createServer((req, res) => {
+      active++;
+      if (active > maxActive) {
+        maxActive = active;
+      }
+      setTimeout(() => {
+        active--;
+        res.writeHead(200);
+        res.end();
+      }, 20);
+    });
+    await new Promise(resolve => server.listen(0, resolve));
+    const port = server.address().port;
+    const client = new APIClient(`http://localhost:${port}`);
+    const requests = [
+      { method: 'GET', path: '/1' },
+      { method: 'GET', path: '/2' },
+      { method: 'GET', path: '/3' },
+      { method: 'GET', path: '/4' }
+    ];
+    await client.doConcurrent(requests, 2);
+    assert.ok(maxActive <= 2);
+    assert.ok(maxActive > 0);
+    server.close();
+  });
 });

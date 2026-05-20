@@ -92,22 +92,25 @@ func (c *APIClient) DoWithRetry(ctx context.Context, params RequestParams, opts 
 	return finalRes
 }
 
-func (c *APIClient) DoConcurrent(ctx context.Context, requests []RequestParams) []ResponseResult {
-	var wg sync.WaitGroup
+func (c *APIClient) DoConcurrent(ctx context.Context, requests []RequestParams, throttleLimit int) []ResponseResult {
 	results := make([]ResponseResult, len(requests))
-
+	if len(requests) == 0 {
+		return results
+	}
+	if throttleLimit <= 0 {
+		throttleLimit = len(requests)
+	}
+	sem := make(chan struct{}, throttleLimit)
+	var wg sync.WaitGroup
 	for i, req := range requests {
 		wg.Add(1)
-		c.executeAsync(ctx, req, i, &wg, results)
+		sem <- struct{}{}
+		go func(idx int, p RequestParams) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			results[idx] = c.Do(ctx, p)
+		}(i, req)
 	}
-
 	wg.Wait()
 	return results
-}
-
-func (c *APIClient) executeAsync(ctx context.Context, p RequestParams, idx int, wg *sync.WaitGroup, res []ResponseResult) {
-	go func() {
-		defer wg.Done()
-		res[idx] = c.Do(ctx, p)
-	}()
 }

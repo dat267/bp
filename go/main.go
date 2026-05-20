@@ -22,7 +22,7 @@ func main() {
 		{Method: http.MethodTrace, Path: "/trace"},
 	}
 
-	results := client.DoConcurrent(ctx, requests)
+	results := client.DoConcurrent(ctx, requests, 3)
 
 	for _, res := range results {
 		fmt.Printf("Method: %-7s | Status: %3d | Error: %v\n", res.Method, res.StatusCode, res.Error)

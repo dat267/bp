@@ -52,14 +52,28 @@ class APIClient {
     }, retryOptions);
   }
 
-  async doConcurrent(requests) {
-    return Promise.all(requests.map(req => this.do(req)));
+  async doConcurrent(requests, throttleLimit = 5) {
+    if (!requests || requests.length === 0) return [];
+    const limit = Math.max(1, throttleLimit);
+    const results = new Array(requests.length);
+    let index = 0;
+    const worker = async () => {
+      while (index < requests.length) {
+        const currentIdx = index++;
+        results[currentIdx] = await this.do(requests[currentIdx]);
+      }
+    };
+    const workers = [];
+    for (let i = 0; i < Math.min(limit, requests.length); i++) {
+      workers.push(worker());
+    }
+    await Promise.all(workers);
+    return results;
   }
 }
 
 async function main() {
   const client = new APIClient('https://httpbin.org');
-
   const requests = [
     { method: 'GET', path: '/get' },
     { method: 'POST', path: '/post', body: { msg: 'hello' } },
@@ -69,9 +83,8 @@ async function main() {
     { method: 'OPTIONS', path: '/options' },
     { method: 'HEAD', path: '/get' }
   ];
-
   console.log('Executing requests...');
-  const results = await client.doConcurrent(requests);
+  const results = await client.doConcurrent(requests, 3);
 
   results.forEach(res => {
     const status = res.statusCode.toString().padStart(3);

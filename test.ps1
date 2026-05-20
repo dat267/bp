@@ -29,7 +29,7 @@ Pop-Location
 
 # 3. PowerShell Tests
 Write-Host "`n[3/3] Running PowerShell Tests..."
-& pwsh -File ./pwsh.test.ps1
+& pwsh -File ./pwsh/test.ps1
 if ($LASTEXITCODE -ne 0) {
     Write-Host "PowerShell Tests Failed" -ForegroundColor Red
     $Failed = $true

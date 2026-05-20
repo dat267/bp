@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 )
@@ -40,7 +41,7 @@ func TestAPIClient_DoConcurrent(t *testing.T) {
 		{Method: http.MethodGet, Path: "/3"},
 	}
 
-	results := client.DoConcurrent(context.Background(), requests)
+	results := client.DoConcurrent(context.Background(), requests, 2)
 
 	if len(results) != 3 {
 		t.Errorf("Expected 3 results, got %d", len(results) )
@@ -91,4 +92,37 @@ func TestAPIClient_HeadersAndBody(t *testing.T) {
 		Headers: map[string]string{"X-Test": "value"},
 		Body:    map[string]string{"foo": "bar"},
 	})
+}
+
+func TestAPIClient_DoConcurrent_Throttling(t *testing.T) {
+	var mu sync.Mutex
+	active, maxActive := 0, 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		active++
+		if active > maxActive {
+			maxActive = active
+		}
+		mu.Unlock()
+		time.Sleep(20 * time.Millisecond)
+		mu.Lock()
+		active--
+		mu.Unlock()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+	client := NewAPIClient(server.URL, 5*time.Second)
+	requests := []RequestParams{
+		{Method: http.MethodGet, Path: "/1"},
+		{Method: http.MethodGet, Path: "/2"},
+		{Method: http.MethodGet, Path: "/3"},
+		{Method: http.MethodGet, Path: "/4"},
+	}
+	client.DoConcurrent(context.Background(), requests, 2)
+	if maxActive > 2 {
+		t.Errorf("Expected max concurrent requests to be at most 2, got %d", maxActive)
+	}
+	if maxActive == 0 {
+		t.Error("Expected some active requests, got 0")
+	}
 }

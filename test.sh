@@ -30,7 +30,7 @@ fi
 
 # 3. PowerShell Tests
 echo -e "\n[3/3] Running PowerShell Tests..."
-if pwsh -File pwsh.test.ps1; then
+if pwsh -File pwsh/test.ps1; then
     echo -e "${GREEN}PowerShell Tests Passed${NC}"
 else
     echo -e "${RED}PowerShell Tests Failed${NC}"
